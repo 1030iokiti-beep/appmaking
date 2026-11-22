@@ -11,6 +11,7 @@ function RootNavigator() {
   const signedIn = !!session;
   const hasProfile = !!profile;
   const banned = !!profile?.is_banned;
+  const diagnosed = !!profile?.love_type;
 
   return (
     <Stack
@@ -33,8 +34,15 @@ function RootNavigator() {
         <Stack.Screen name="banned" options={{ headerShown: false }} />
       </Stack.Protected>
 
-      <Stack.Protected guard={signedIn && hasProfile && !banned}>
+      <Stack.Protected guard={signedIn && hasProfile && !banned && !diagnosed}>
+        <Stack.Screen name="diagnosis" options={{ title: '恋愛タイプ診断', headerBackVisible: false }} />
+      </Stack.Protected>
+
+      <Stack.Protected guard={signedIn && hasProfile && !banned && diagnosed}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="my-type" options={{ title: 'あなたの恋愛タイプ' }} />
+        <Stack.Screen name="retake" options={{ title: '恋愛タイプ診断' }} />
+        <Stack.Screen name="search-settings" options={{ title: '検索条件' }} />
         <Stack.Screen name="chat/[matchId]" options={{ title: 'トーク' }} />
         <Stack.Screen name="verify" options={{ title: '年齢確認' }} />
         <Stack.Screen name="premium" options={{ title: 'プレミアム会員', presentation: 'modal' }} />

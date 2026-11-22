@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { TypeBadge } from '../../components/LoveTypeCard';
 import { Avatar, Loading, Screen, styles } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { supabase } from '../../lib/supabase';
@@ -59,6 +60,7 @@ export default function Matches() {
             <Text style={styles.h2}>
               {m.nickname} <Text style={styles.sub}>{m.age}歳</Text>
             </Text>
+            <TypeBadge code={m.love_type} compatibility={m.compatibility} />
             <Text style={styles.sub} numberOfLines={1}>
               {m.last_message ?? '🎉 マッチングしました！メッセージを送ってみましょう'}
             </Text>

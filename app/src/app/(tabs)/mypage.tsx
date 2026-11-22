@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
+import { TypeBadge } from '../../components/LoveTypeCard';
 import { Avatar, Button, Screen, styles } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { errorMessage, supabase } from '../../lib/supabase';
@@ -54,6 +55,9 @@ export default function MyPage() {
         <Avatar path={profile.avatar_path} size={100} />
         <Text style={styles.h1}>{profile.nickname}</Text>
         <Text style={styles.sub}>{profile.prefecture}</Text>
+        <Pressable onPress={() => router.push('/my-type')}>
+          <TypeBadge code={profile.love_type} />
+        </Pressable>
       </View>
 
       {!premium && (
@@ -65,6 +69,8 @@ export default function MyPage() {
 
       <View>
         <Row label="プロフィール編集" onPress={() => router.push('/edit-profile')} />
+        <Row label="恋愛タイプ・価値観" onPress={() => router.push('/my-type')} />
+        <Row label="検索条件" value={`${profile.pref_age_min}〜${profile.pref_age_max}歳`} onPress={() => router.push('/search-settings')} />
         <Row label="年齢確認" value={VERIFY_LABEL[profile.verification_status]} onPress={() => router.push('/verify')} />
         <Row label="会員ステータス" value={premium ? 'プレミアム 👑' : '無料会員'} onPress={() => router.push('/premium')} />
         <Row label="安全に使うためのガイド" onPress={() => router.push('/legal/guidelines')} />

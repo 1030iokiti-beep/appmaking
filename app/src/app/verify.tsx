@@ -47,7 +47,7 @@ export default function Verify() {
       </View>
 
       <Text style={styles.body}>
-        法律（出会い系サイト規制法）により、メッセージのやりとりやいいねの前に18歳以上であることの確認が義務付けられています。
+        法律（出会い系サイト規制法）により、メッセージのやりとりやいいねの前に年齢の確認が義務付けられています。本サービスは20歳以上の方が対象です。
       </Text>
 
       <View style={styles.card}>

@@ -1,11 +1,13 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { TypeBadge } from '../../components/LoveTypeCard';
 import { Button, Loading, Screen, styles } from '../../components/ui';
 import { VerifyBanner } from '../../components/VerifyBanner';
 import { useAuth } from '../../lib/auth';
 import { avatarUrl, errorMessage, supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
+import { loveType, sharedValues } from '../../lib/diagnosis';
 import type { Candidate, MyStatus } from '../../lib/types';
 
 function lastActiveLabel(iso: string) {
@@ -79,17 +81,24 @@ export default function Discover() {
   return (
     <Screen>
       <VerifyBanner />
-      {status && (
-        <Text style={[styles.sub, { textAlign: 'right' }]}>
-          今日のいいね残り {Math.max(0, status.likes_limit - status.likes_used)} / {status.likes_limit}
-        </Text>
-      )}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Pressable onPress={() => router.push('/search-settings')}>
+          <Text style={[styles.sub, { color: colors.primary }]}>
+            ⚙️ {profile?.pref_age_min}〜{profile?.pref_age_max}歳・関東
+          </Text>
+        </Pressable>
+        {status && (
+          <Text style={styles.sub}>
+            今日のいいね残り {Math.max(0, status.likes_limit - status.likes_used)} / {status.likes_limit}
+          </Text>
+        )}
+      </View>
 
       {!current ? (
         <View style={[styles.card, { alignItems: 'center', paddingVertical: 40 }]}>
           <Text style={{ fontSize: 40 }}>🌙</Text>
           <Text style={styles.h2}>今日のおすすめは以上です</Text>
-          <Text style={styles.sub}>新しいお相手が登録されたらここに表示されます</Text>
+          <Text style={styles.sub}>新しいお相手が登録されたらここに表示されます。検索条件の年齢を広げると見つかりやすくなります。</Text>
           <Button title="再読み込み" variant="outline" onPress={load} style={{ alignSelf: 'stretch', marginTop: 12 }} />
         </View>
       ) : (
@@ -108,7 +117,21 @@ export default function Discover() {
             <Text style={styles.sub}>
               {current.prefecture}・{lastActiveLabel(current.last_active_at)}
             </Text>
-            {!!current.bio && <Text style={styles.body}>{current.bio}</Text>}
+            <TypeBadge code={current.love_type} compatibility={current.compatibility} />
+            {!!loveType(current.love_type) && <Text style={styles.sub}>「{loveType(current.love_type)!.catch}」</Text>}
+            {profile && sharedValues(profile.value_answers, current.value_answers).length > 0 && (
+              <View style={{ gap: 4, marginTop: 4 }}>
+                <Text style={styles.label}>🤝 共通の価値観</Text>
+                <View style={styles.chips}>
+                  {sharedValues(profile.value_answers, current.value_answers).map((v) => (
+                    <View key={v} style={[styles.chip, { paddingVertical: 4 }]}>
+                      <Text style={{ fontSize: 12, color: colors.text }}>{v}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+            {!!current.bio && <Text style={[styles.body, { marginTop: 4 }]}>{current.bio}</Text>}
             <Pressable onPress={() => router.push({ pathname: '/report', params: { userId: current.id, nickname: current.nickname } })}>
               <Text style={[styles.sub, { textAlign: 'right', marginTop: 8 }]}>通報する</Text>
             </Pressable>

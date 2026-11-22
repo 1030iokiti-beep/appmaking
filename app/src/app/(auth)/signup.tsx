@@ -44,7 +44,7 @@ export default function Signup() {
       <Field label="メールアドレス" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
       <Field label="パスワード（8文字以上）" value={password} onChangeText={setPassword} secureTextEntry autoComplete="new-password" />
       <Check checked={adult} onToggle={() => setAdult(!adult)}>
-        私は18歳以上で、高校生ではありません
+        私は20歳以上です
       </Check>
       <Check checked={agree} onToggle={() => setAgree(!agree)}>
         <Link href="/legal/terms" style={{ color: colors.primary }}>利用規約</Link>と

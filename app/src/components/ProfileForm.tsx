@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/auth';
 import { errorMessage, supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
-import { PREFECTURES, type Gender, type Profile } from '../lib/types';
+import { MIN_AGE, PREFECTURES, type Gender, type Profile } from '../lib/types';
 import { pickImage, uploadImage } from '../lib/upload';
 import { Avatar, Button, Chips, Field, Notice, Screen, styles } from './ui';
 
@@ -40,7 +40,7 @@ export function ProfileForm({ existing, onSaved }: { existing?: Profile | null; 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate) || isNaN(Date.parse(birthdate))) {
       return Alert.alert('生年月日を 1995-04-01 の形式で入力してください');
     }
-    if (ageOf(birthdate) < 18) return Alert.alert('18歳未満の方はご利用いただけません');
+    if (ageOf(birthdate) < MIN_AGE) return Alert.alert(`${MIN_AGE}歳未満の方はご利用いただけません`);
     if (!gender || !prefecture || !nickname.trim()) return Alert.alert('未入力の項目があります');
 
     setBusy(true);
@@ -92,7 +92,7 @@ export function ProfileForm({ existing, onSaved }: { existing?: Profile | null; 
         maxLength={10}
       />
       <View style={{ gap: 6 }}>
-        <Text style={styles.label}>居住地</Text>
+        <Text style={styles.label}>居住地（現在は関東エリアのみ）</Text>
         <Pressable style={styles.input} onPress={() => setPicking(true)}>
           <Text style={{ fontSize: 16, color: prefecture ? colors.text : colors.sub }}>{prefecture || '選択してください'}</Text>
         </Pressable>

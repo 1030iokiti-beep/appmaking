@@ -11,12 +11,12 @@ export default function Welcome() {
         <Text style={{ fontSize: 64 }}>💞</Text>
         <Text style={[styles.h1, { fontSize: 34, color: colors.primary }]}>こいまち</Text>
         <Text style={[styles.body, { textAlign: 'center' }]}>
-          年齢確認済みの人だけが集まる{'\n'}安心・安全な恋活マッチング
+          恋愛タイプ診断と価値観で{'\n'}相性のいい人と出会える
         </Text>
       </View>
       <View style={{ gap: 12 }}>
         <Notice>
-          本サービスは18歳以上の方のみご利用いただけます（高校生は18歳以上でもご利用できません）。
+          本サービスは20歳以上の方のみご利用いただけます。現在は関東エリア限定です。
           メッセージのやりとりには公的書類による年齢確認が必要です。
         </Notice>
         <Button title="はじめる（無料）" onPress={() => router.push('/signup')} />

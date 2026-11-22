@@ -1,12 +1,22 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
+import { TypeBadge } from '../../components/LoveTypeCard';
 import { Avatar, Button, Loading, Screen, styles } from '../../components/ui';
 import { VerifyBanner } from '../../components/VerifyBanner';
 import { useAuth } from '../../lib/auth';
 import { errorMessage, supabase } from '../../lib/supabase';
 
-type Liker = { id: string; nickname: string; age: number; prefecture: string; bio: string; avatar_path: string | null };
+type Liker = {
+  id: string;
+  nickname: string;
+  age: number;
+  prefecture: string;
+  bio: string;
+  avatar_path: string | null;
+  love_type: string | null;
+  compatibility: number;
+};
 
 export default function Likes() {
   const { session, profile } = useAuth();
@@ -43,7 +53,7 @@ export default function Likes() {
       {!premium && likers.length > 0 && (
         <View style={[styles.card, { alignItems: 'center' }]}>
           <Text style={[styles.body, { textAlign: 'center' }]}>
-            プレミアム会員になると、誰がいいねしてくれたか確認して、すぐにマッチングできます。
+            相性％と恋愛タイプは見えています。プレミアム会員になると、誰がいいねしてくれたか確認して、すぐにマッチングできます。
           </Text>
           <Button title="いいねした人を見る" onPress={() => router.push('/premium')} style={{ alignSelf: 'stretch' }} />
         </View>
@@ -57,6 +67,7 @@ export default function Likes() {
               {l.nickname} {l.age}歳
             </Text>
             <Text style={styles.sub}>{l.prefecture}</Text>
+            <TypeBadge code={l.love_type} compatibility={l.compatibility} />
             {!!l.bio && (
               <Text style={styles.sub} numberOfLines={2}>
                 {l.bio}
