@@ -35,7 +35,8 @@
           "photosPermission": "プロフィール写真と本人確認書類の選択に使用します",
           "cameraPermission": "本人確認書類の撮影に使用します"
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "scheme": "koimachi"
   }

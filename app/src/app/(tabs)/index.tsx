@@ -1,28 +1,21 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Image, Pressable, Text, View } from 'react-native';
-import { TypeBadge } from '../../components/LoveTypeCard';
+import { Alert, Pressable, Text, View } from 'react-native';
+import { ActionButtons, CandidateCard } from '../../components/CandidateCard';
+import { MatchModal, type MatchInfo } from '../../components/MatchModal';
 import { Button, Loading, Screen, styles } from '../../components/ui';
 import { VerifyBanner } from '../../components/VerifyBanner';
 import { useAuth } from '../../lib/auth';
-import { avatarUrl, errorMessage, supabase } from '../../lib/supabase';
+import { errorMessage, supabase } from '../../lib/supabase';
 import { colors } from '../../lib/theme';
-import { loveType, sharedValues } from '../../lib/diagnosis';
 import type { Candidate, MyStatus } from '../../lib/types';
-
-function lastActiveLabel(iso: string) {
-  const h = (Date.now() - new Date(iso).getTime()) / 36e5;
-  if (h < 1) return '🟢 オンライン';
-  if (h < 24) return '🟡 24時間以内';
-  if (h < 72) return '3日以内';
-  return '1週間以上';
-}
 
 export default function Discover() {
   const { session, profile } = useAuth();
   const [candidates, setCandidates] = useState<Candidate[] | null>(null);
   const [status, setStatus] = useState<MyStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const [matched, setMatched] = useState<MatchInfo | null>(null);
 
   const load = useCallback(async () => {
     const [c, s] = await Promise.all([supabase.rpc('get_candidates', { p_limit: 20 }), supabase.rpc('get_my_status').single()]);
@@ -65,10 +58,14 @@ export default function Discover() {
       const [a, b] = [me, current.id].sort();
       const { data: match } = await supabase.from('matches').select('id').eq('user1_id', a).eq('user2_id', b).maybeSingle();
       if (match) {
-        Alert.alert('🎉 マッチングしました！', `${current.nickname}さんとメッセージできるようになりました。`, [
-          { text: 'あとで' },
-          { text: 'メッセージを送る', onPress: () => router.push(`/chat/${match.id}`) },
-        ]);
+        setMatched({
+          matchId: match.id,
+          partnerId: current.id,
+          nickname: current.nickname,
+          partnerAvatar: current.avatar_path,
+          myAvatar: profile?.avatar_path ?? null,
+          compatibility: current.compatibility,
+        });
       }
       setStatus((s) => (s ? { ...s, likes_used: s.likes_used + 1 } : s));
     }
@@ -78,70 +75,53 @@ export default function Discover() {
 
   if (!candidates) return <Loading />;
 
+  const remaining = status ? Math.max(0, status.likes_limit - status.likes_used) : null;
+
   return (
     <Screen>
       <VerifyBanner />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Pressable onPress={() => router.push('/search-settings')}>
-          <Text style={[styles.sub, { color: colors.primary }]}>
-            ⚙️ {profile?.pref_age_min}〜{profile?.pref_age_max}歳・関東
+        <Pressable onPress={() => router.push('/search-settings')} style={[styles.chip, { flexDirection: 'row', gap: 4 }]}>
+          <Text style={{ fontSize: 13, color: colors.text, fontWeight: '700' }}>
+            ⚙️ {profile?.pref_age_min}〜{profile?.pref_age_max}歳
           </Text>
         </Pressable>
-        {status && (
-          <Text style={styles.sub}>
-            今日のいいね残り {Math.max(0, status.likes_limit - status.likes_used)} / {status.likes_limit}
-          </Text>
+        {remaining != null && (
+          <View style={{ backgroundColor: colors.soft, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
+            <Text style={{ fontSize: 13, color: colors.primaryDark, fontWeight: '800' }}>♥ 残り {remaining}</Text>
+          </View>
         )}
       </View>
 
       {!current ? (
-        <View style={[styles.card, { alignItems: 'center', paddingVertical: 40 }]}>
-          <Text style={{ fontSize: 40 }}>🌙</Text>
+        <View style={[styles.card, { alignItems: 'center', paddingVertical: 48, gap: 10 }]}>
+          <Text style={{ fontSize: 56 }}>🌙</Text>
           <Text style={styles.h2}>今日のおすすめは以上です</Text>
-          <Text style={styles.sub}>新しいお相手が登録されたらここに表示されます。検索条件の年齢を広げると見つかりやすくなります。</Text>
-          <Button title="再読み込み" variant="outline" onPress={load} style={{ alignSelf: 'stretch', marginTop: 12 }} />
+          <Text style={[styles.sub, { textAlign: 'center' }]}>
+            新しいお相手が登録されたらここに表示されます。{'\n'}検索条件の年齢を広げると見つかりやすくなります。
+          </Text>
+          <Button title="もう一度さがす" variant="outline" onPress={load} style={{ alignSelf: 'stretch', marginTop: 12 }} />
         </View>
       ) : (
-        <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
-          {avatarUrl(current.avatar_path) ? (
-            <Image source={{ uri: avatarUrl(current.avatar_path)! }} style={{ width: '100%', aspectRatio: 1 }} />
-          ) : (
-            <View style={{ width: '100%', aspectRatio: 1, backgroundColor: colors.theirs, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 80 }}>👤</Text>
-            </View>
-          )}
-          <View style={{ padding: 16, gap: 6 }}>
-            <Text style={styles.h1}>
-              {current.nickname} <Text style={{ fontSize: 20, fontWeight: '400' }}>{current.age}歳</Text>
-            </Text>
-            <Text style={styles.sub}>
-              {current.prefecture}・{lastActiveLabel(current.last_active_at)}
-            </Text>
-            <TypeBadge code={current.love_type} compatibility={current.compatibility} />
-            {!!loveType(current.love_type) && <Text style={styles.sub}>「{loveType(current.love_type)!.catch}」</Text>}
-            {profile && sharedValues(profile.value_answers, current.value_answers).length > 0 && (
-              <View style={{ gap: 4, marginTop: 4 }}>
-                <Text style={styles.label}>🤝 共通の価値観</Text>
-                <View style={styles.chips}>
-                  {sharedValues(profile.value_answers, current.value_answers).map((v) => (
-                    <View key={v} style={[styles.chip, { paddingVertical: 4 }]}>
-                      <Text style={{ fontSize: 12, color: colors.text }}>{v}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
-            {!!current.bio && <Text style={[styles.body, { marginTop: 4 }]}>{current.bio}</Text>}
-            <Pressable onPress={() => router.push({ pathname: '/report', params: { userId: current.id, nickname: current.nickname } })}>
-              <Text style={[styles.sub, { textAlign: 'right', marginTop: 8 }]}>通報する</Text>
-            </Pressable>
-          </View>
-          <View style={{ flexDirection: 'row', gap: 12, padding: 16, paddingTop: 0 }}>
-            <Button title="スキップ" variant="outline" onPress={() => act('skip')} disabled={busy} style={{ flex: 1 }} />
-            <Button title="💗 いいね" onPress={() => act('like')} loading={busy} style={{ flex: 1 }} />
-          </View>
-        </View>
+        <>
+          <CandidateCard
+            candidate={current}
+            myValues={profile?.value_answers ?? {}}
+            onReport={() => router.push({ pathname: '/report', params: { userId: current.id, nickname: current.nickname } })}
+          />
+          <ActionButtons onSkip={() => act('skip')} onLike={() => act('like')} disabled={busy} />
+        </>
       )}
+
+      <MatchModal
+        match={matched}
+        onClose={() => setMatched(null)}
+        onMessage={() => {
+          const m = matched;
+          setMatched(null);
+          if (m) router.push({ pathname: '/chat/[matchId]', params: { matchId: m.matchId, name: m.nickname, partnerId: m.partnerId } });
+        }}
+      />
     </Screen>
   );
 }

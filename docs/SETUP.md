@@ -35,7 +35,7 @@ where v.status = 'pending' order by v.created_at;
 ```
 
 書類画像は Storage → `id-documents` → `document_path` のファイルを開いて確認します。
-**確認すること**：書類の種類 / 生年月日が **20歳以上** / プロフィールの生年月日と一致（学生証は不可）
+**確認すること**：書類の種類 / 生年月日が **18歳以上**（高校生でないことも確認） / プロフィールの生年月日と一致（学生証は不可）
 
 承認・否認（SQL Editor は管理者権限で動くので直接更新します）:
 
@@ -99,7 +99,36 @@ npx expo start
    - Authorization header: `Bearer <上で設定した値>`
 5. Apple の **Small Business Program** に申請すると手数料が 30% → 15% になります（必ずやる）
 
-## 4. ストア公開
+## 4. 診断ページ（Web）の公開
+
+Instagram 広告のリンク先にする、登録不要の診断ページです（`web/`）。
+
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:5173 で確認
+npm run build    # dist/ に出力
+```
+
+**公開方法（おすすめ：Cloudflare Pages または Vercel、どちらも無料枠あり）**
+- リポジトリを連携し、ルートディレクトリ `web`、ビルドコマンド `npm run build`、出力先 `dist` を指定
+- 環境変数を設定:
+  - `APP_STORE_URL` / `PLAY_STORE_URL`：ストアのURL（未設定なら「近日公開予定」と表示）
+  - `META_PIXEL_ID`：Meta ピクセルID（広告の計測用。未設定なら計測しない）
+  - `SITE_URL`：公開URL（例 `https://shindan.example.com`。SNSでシェアされたときのプレビューに使用）
+- `web/dist/og.png`（1200×630）を置くと、LINE・X でリンクを貼ったときに画像が表示されます（`web/src/` に置いて build.mjs でコピーするよう追加してください）
+
+**計測されるイベント**（Meta 広告マネージャで「コンバージョン」に使える）
+| イベント | タイミング |
+|---|---|
+| `StartDiagnosis` | 診断を開始 |
+| `CompleteDiagnosis` | 診断を完了（タイプ付き） |
+| `ShareStory` | ストーリーズ用画像を保存・共有 |
+| `Lead` | ストアへのボタンをタップ |
+
+> Meta ピクセルを使う場合、電気通信事業法の「外部送信規律」により、送信する情報と送信先をプライバシーポリシー等で公表する必要があります。
+
+## 5. ストア公開
 
 1. `app/app.json` の `ios.bundleIdentifier` / `android.package`（`com.example.koimachi`）を自分のドメインに変更
 2. アイコン（`app/assets/`）を差し替え

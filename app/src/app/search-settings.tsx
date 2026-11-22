@@ -47,10 +47,10 @@ export default function SearchSettings() {
     <Screen>
       <Text style={styles.h2}>お相手の年齢</Text>
       <View style={[styles.card, { gap: 16 }]}>
-        <Stepper label="下限" value={min} min={20} max={max} onChange={setMin} />
-        <Stepper label="上限" value={max} min={min} max={80} onChange={setMax} />
+        <Stepper label="下限" value={min} min={18} max={max} onChange={setMin} />
+        <Stepper label="上限" value={max} min={min} max={100} onChange={setMax} />
       </View>
-      <Text style={styles.sub}>現在のサービス提供エリアは関東（東京・神奈川・埼玉・千葉・茨城・栃木・群馬）です。</Text>
+      <Text style={styles.sub}>同じ都道府県の人が少し優先して表示されます。</Text>
       <Button title="保存する" onPress={save} loading={busy} />
     </Screen>
   );

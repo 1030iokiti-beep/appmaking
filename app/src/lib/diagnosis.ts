@@ -85,6 +85,18 @@ export const LOVE_TYPES: Record<string, LoveType> = {
   CFID: { name: 'じっくり信頼型', emoji: '🌳', catch: '時間をかけて育てる恋', description: '慎重で誠実。すぐには心を開かないぶん、信頼関係ができると深く長く愛するタイプです。' },
 };
 
+/** タイプのグループ（最初の2文字）ごとのテーマカラー */
+export const TYPE_GROUPS: Record<string, { label: string; gradient: readonly [string, string] }> = {
+  PL: { label: '情熱リーダー', gradient: ['#FF5A4E', '#FF3D7F'] },
+  PF: { label: '情熱ロマンス', gradient: ['#FF7EB3', '#E0569E'] },
+  CL: { label: '包容リーダー', gradient: ['#2CC5A0', '#2B8FD8'] },
+  CF: { label: '癒しサポーター', gradient: ['#A98BFA', '#6F8CFF'] },
+};
+
+export function typeGradient(code: string | null | undefined): readonly [string, string] {
+  return TYPE_GROUPS[code?.slice(0, 2) ?? '']?.gradient ?? ['#FF4F7E', '#FF8A5C'];
+}
+
 export function loveType(code: string | null | undefined): LoveType | null {
   return code ? (LOVE_TYPES[code] ?? null) : null;
 }

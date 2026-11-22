@@ -1,0 +1,12 @@
+{
+  "name": "koimachi-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10"
+  }
+}

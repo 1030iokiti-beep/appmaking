@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
@@ -54,13 +55,20 @@ export default function Premium() {
 
   return (
     <Screen>
-      <Text style={[styles.h1, { textAlign: 'center' }]}>👑 プレミアム会員</Text>
+      <LinearGradient colors={['#2B1B3A', '#5B2A86', '#C2407A']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, padding: 24, alignItems: 'center', gap: 6 }}>
+        <Text style={{ fontSize: 48 }}>👑</Text>
+        <Text style={{ color: '#FFD36E', fontSize: 26, fontWeight: '900' }}>こいまち プレミアム</Text>
+        <Text style={{ color: '#fff', textAlign: 'center', opacity: 0.9 }}>相性のいい人と、もっと早く出会える</Text>
+      </LinearGradient>
       {profile?.gender === 'female' && <Notice>女性はメッセージ機能を無料でご利用いただけます。プレミアムでは「いいねした人がわかる」などの機能が追加されます。</Notice>}
-      <View style={styles.card}>
+      <View style={[styles.card, { gap: 14 }]}>
         {BENEFITS.map(([icon, text]) => (
-          <Text key={text} style={[styles.body, { fontSize: 16 }]}>
-            {icon} {text}
-          </Text>
+          <View key={text} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 20 }}>{icon}</Text>
+            </View>
+            <Text style={[styles.body, { fontSize: 16, fontWeight: '700' }]}>{text}</Text>
+          </View>
         ))}
       </View>
 

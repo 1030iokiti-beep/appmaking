@@ -2,14 +2,16 @@
 
 恋愛タイプ診断（16タイプ）と価値観の回答から「相性％」を出して、相性のいい人を紹介する iOS / Android 向けの恋活アプリです。
 
-- 対象：**関東（1都6県）・20歳以上**（検索の初期値は 20〜50歳）
-- 集客：Instagram 広告（年齢・地域を絞って配信）＋診断結果のシェア
+- 登録：**18〜100歳・全国どこからでも可**（高校生は不可）
+- 狙い：関東の 20〜50歳（検索の初期値は 20〜50歳、同じ都道府県の人を少し優先表示）
+- 集客：Instagram 広告 → **Web の診断ページ**（登録不要）→ アプリ。診断結果はストーリーズ用画像でシェア
 
 | | |
 |---|---|
 | アプリ | Expo (React Native) + TypeScript + Expo Router — `app/` |
 | バックエンド | Supabase（認証・PostgreSQL・リアルタイム・画像保存） — `supabase/` |
 | 課金 | RevenueCat（App Store / Google Play のサブスクリプション） |
+| 診断LP | 静的サイト（esbuild）。診断ロジックはアプリと共通 — `web/` |
 
 ## できること
 
@@ -48,6 +50,7 @@ app/
     verify, premium, report, edit-profile, onboarding, legal/[doc]
   src/lib/            Supabase クライアント・認証・課金・規約文面
   src/components/     共通 UI
+web/                  広告の受け皿になる診断ページ（登録不要）
 supabase/
   migrations/         DB スキーマ・セキュリティルール・関数
   functions/revenuecat-webhook/  課金状態をDBに反映する Edge Function
