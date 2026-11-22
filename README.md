@@ -1,0 +1,48 @@
+# こいまち — 恋活マッチングアプリ
+
+年齢確認済みのユーザーだけがメッセージできる、iOS / Android 向けの恋活マッチングアプリです。
+
+| | |
+|---|---|
+| アプリ | Expo (React Native) + TypeScript + Expo Router — `app/` |
+| バックエンド | Supabase（認証・PostgreSQL・リアルタイム・画像保存） — `supabase/` |
+| 課金 | RevenueCat（App Store / Google Play のサブスクリプション） |
+
+## できること
+
+- メール登録 → プロフィール作成（写真・生年月日・居住地・自己紹介）
+- **年齢確認**：本人確認書類をアップロード → 運営が目視で承認
+- **さがす**：異性・年齢確認済み・同じ都道府県を優先して表示。いいね / スキップ
+- **マッチング**：お互いにいいねで成立 → リアルタイムチャット
+- **通報・ブロック・マッチ解除**、退会（アカウント削除）
+- **禁止ワード検知**：LINE ID・電話番号・メールアドレス・援助・パパ活・未成年を示す語などを含むメッセージ/プロフィールをサーバー側で拒否
+- **収益化**（男性有料モデル）
+
+| | 無料 | プレミアム |
+|---|---|---|
+| いいね | 1日10回 | 1日100回 |
+| メッセージ送信 | 女性のみ | ○ |
+| いいねしてくれた人を見る | 人数のみ | ○ |
+
+課金や年齢確認の判定はすべてデータベース側（RLS とトリガー）で行っているため、アプリを改造されても回避できません。
+
+## 次に読むもの
+
+1. [docs/SETUP.md](docs/SETUP.md) — 動かすまでの手順（Supabase・RevenueCat・ストア申請）
+2. [docs/BUSINESS.md](docs/BUSINESS.md) — **公開前に必須の法的手続き**と、稼ぐための戦略・収支の目安
+
+## ディレクトリ
+
+```
+app/
+  src/app/            画面（Expo Router。ファイル = 画面）
+    (auth)/           ようこそ・ログイン・新規登録
+    (tabs)/           さがす・いいね・トーク・マイページ
+    chat/[matchId]    チャット
+    verify, premium, report, edit-profile, onboarding, legal/[doc]
+  src/lib/            Supabase クライアント・認証・課金・規約文面
+  src/components/     共通 UI
+supabase/
+  migrations/         DB スキーマ・セキュリティルール・関数
+  functions/revenuecat-webhook/  課金状態をDBに反映する Edge Function
+```
