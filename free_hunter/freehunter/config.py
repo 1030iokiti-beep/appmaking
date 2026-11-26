@@ -22,6 +22,17 @@ class Settings:
     raw: dict[str, Any]
 
     def get(self, section: str, key: str, default: Any = None) -> Any:
+        # 環境変数 FH_<SECTION>_<KEY> があれば優先（GitHub Actions / VPS 用）
+        env = os.environ.get(f"FH_{section}_{key}".upper())
+        if env not in (None, ""):
+            base = self.raw.get(section, {}).get(key, default)
+            if isinstance(base, bool):
+                return env.lower() in ("1", "true", "yes")
+            if isinstance(base, int):
+                return int(env)
+            if isinstance(base, float):
+                return float(env)
+            return env
         return self.raw.get(section, {}).get(key, default)
 
     def path(self, key: str, default: str) -> Path:

@@ -18,7 +18,8 @@ class OfficialSiteCollector(BaseCollector):
         html = self.fetch(self.source["url"])
         links = find_campaign_links(html, self.source["url"],
                                     same_domain_only=self.source.get("same_domain_only", False),
-                                    word_re=OFFICIAL_WORDS)
+                                    word_re=OFFICIAL_WORDS,
+                                    link_pattern=self.source.get("link_pattern"))
         out: list[Campaign] = []
         for text, url, blk in links:
             c = self.build(text, url, blk, is_official=True)

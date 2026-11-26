@@ -16,6 +16,7 @@
   ai-export       Claude Code 用の分析依頼ファイルを出力
   ai-import FILE  Claude Code の回答 JSON を取り込む
   dashboard       管理画面を起動
+  report          スマホ用の一覧（Markdown）を出力（--out パス）
 """
 from __future__ import annotations
 
@@ -186,6 +187,15 @@ def cmd_ai_import(a, s):
     print(f"{n}件の AI 分析結果を取り込みました")
 
 
+def cmd_report(a, s):
+    from pathlib import Path
+
+    from .report import write_report
+    p = write_report(_db(s), Path(a.out), soon_days=s.get("scoring", "deadline_soon_days", 3),
+                     include_history=a.history)
+    print(f"レポート出力: {p}")
+
+
 def cmd_dashboard(a, s):
     subprocess.run([sys.executable, "-m", "streamlit", "run", str(BASE_DIR / "dashboard" / "app.py")], check=False)
 
@@ -211,6 +221,8 @@ def main(argv=None):
     x = sub.add_parser("ai-export"); x.add_argument("--limit", type=int, default=30); x.set_defaults(f=cmd_ai_export)
     x = sub.add_parser("ai-import"); x.add_argument("file"); x.set_defaults(f=cmd_ai_import)
     sub.add_parser("dashboard").set_defaults(f=cmd_dashboard)
+    x = sub.add_parser("report"); x.add_argument("--out", default=str(BASE_DIR / "data" / "report.md"))
+    x.add_argument("--history", action="store_true", help="応募・当選の件数も載せる"); x.set_defaults(f=cmd_report)
     a = p.parse_args(argv)
     s = load_settings()
     setup_logging(s.log_dir)

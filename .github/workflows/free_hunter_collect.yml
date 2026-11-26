@@ -1,0 +1,48 @@
+# FREE HUNTER: 毎日の懸賞収集（パソコン不要）
+# 結果は freehunter-data ブランチの README.md（スマホ用一覧）と freehunter.db に保存されます。
+# 手動実行: GitHub アプリ → Actions → このワークフロー → Run workflow
+name: FREE HUNTER 懸賞収集
+
+on:
+  schedule:
+    - cron: "41 21 * * *"   # 毎日 6:41（日本時間）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: freehunter-data
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: free_hunter
+    env:
+      FH_DB: ${{ github.workspace }}/fh-data/freehunter.db
+      # 応募資格の判定用（Settings → Secrets and variables → Actions → Variables で設定）
+      FH_PROFILE_PREFECTURE: ${{ vars.FH_PROFILE_PREFECTURE }}
+      FH_PROFILE_AGE: ${{ vars.FH_PROFILE_AGE }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: free_hunter/requirements-ci.txt
+      - run: pip install -r requirements-ci.txt
+      - name: 前回のデータを読み込む
+        run: scripts/ci_data_branch.sh load
+      - name: 収集と評価
+        run: python -m freehunter run
+      - name: スマホ用一覧を作成
+        run: python -m freehunter report --out "${{ github.workspace }}/fh-data/README.md" ${{ github.event.repository.private && '--history' || '' }}
+      - name: 保存
+        if: always()
+        run: |
+          if [ -f "$FH_DB" ]; then scripts/ci_data_branch.sh save; fi

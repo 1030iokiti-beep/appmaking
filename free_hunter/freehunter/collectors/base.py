@@ -28,7 +28,7 @@ class BaseCollector:
         self.http = http
         self.settings = settings
         self.name = source["name"]
-        self.max_detail = settings.get("http", "max_detail_pages", 30) if settings else 30
+        self.max_detail = source.get("max_detail") or (settings.get("http", "max_detail_pages", 30) if settings else 30)
 
     def collect(self) -> list[Campaign]:
         raise NotImplementedError
@@ -60,7 +60,7 @@ class BaseCollector:
             conditions=info["conditions"],
             conditions_text=_conditions_excerpt(text),
             method=info["method"],
-            apply_url=url,
+            apply_url=info["source_url"] or url,
             is_official=self.source.get("is_official", False) if is_official is None else is_official,
             ended=info["ended"],
             raw_text=text[:3000],
@@ -76,11 +76,20 @@ class BaseCollector:
             return c
         text = html_to_text(html)
         d = self.build(page_title(html) or c.title, c.url, text, company=c.company)
-        for f in ("company", "winners", "start_date", "deadline", "method", "conditions_text"):
+        # 一覧のリンク文字はカテゴリ名や日付が混ざりやすいので、詳細ページのタイトルを優先
+        dt = clean_title(page_title(html) or "")
+        if len(dt) >= 6:
+            c.title = dt
+        if d.apply_url and d.apply_url != c.url:
+            c.apply_url = d.apply_url  # 懸賞サイトに載っている主催者の応募ページ
+        # 詳細ページの主催者・賞品は一覧より正確なので優先
+        if d.company:
+            c.company = d.company
+        for f in ("winners", "start_date", "deadline", "method", "conditions_text"):
             if getattr(c, f) in (None, "", []) and getattr(d, f) not in (None, "", []):
                 setattr(c, f, getattr(d, f))
         # 賞品: 一覧のタイトルをそのまま拾っただけなら詳細ページの記載を優先
-        if d.prize and (not c.prize or c.prize in c.title):
+        if d.prize:
             c.prize = d.prize
         # 賞品価値: 記載値 > 推定値。値と推定フラグは必ずセットで更新
         if d.prize_value_yen and (not c.prize_value_yen or (c.prize_value_estimated and not d.prize_value_estimated)):
@@ -90,6 +99,16 @@ class BaseCollector:
         c.eligibility = {**d.eligibility, **c.eligibility}
         c.raw_text = (c.raw_text + "\n---\n" + d.raw_text)[:3000]
         return c
+
+
+def clean_title(t: str) -> str:
+    """「キャンペーン名 | サイト名」のサイト名部分を除く。"""
+    t = normalize_text(t).strip()
+    for sep in (" | ", "|", " - ", "｜"):
+        if sep in t:
+            t = t.split(sep)[0].strip()
+            break
+    return t
 
 
 def _conditions_excerpt(text: str) -> Optional[str]:
@@ -116,7 +135,8 @@ def block_text(a: Tag, max_len: int = 600) -> str:
 
 
 def find_campaign_links(html: str, base_url: str, same_domain_only: bool = False,
-                        word_re: re.Pattern = CAMPAIGN_WORDS) -> list[tuple[str, str, str]]:
+                        word_re: re.Pattern = CAMPAIGN_WORDS,
+                        link_pattern: str | None = None) -> list[tuple[str, str, str]]:
     """(リンク文字, 絶対URL, ブロックテキスト) を返す。"""
     from ..normalize import domain_of
 
@@ -134,6 +154,8 @@ def find_campaign_links(html: str, base_url: str, same_domain_only: bool = False
         if url == base_norm or url in seen:
             continue
         if same_domain_only and domain_of(url) != base_domain:
+            continue
+        if link_pattern and not re.search(link_pattern, url):
             continue
         text = a.get_text(" ", strip=True)
         if not text and a.find("img"):

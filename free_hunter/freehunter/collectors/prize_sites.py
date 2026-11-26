@@ -37,6 +37,6 @@ class ListPageCollector(BaseCollector):
             if not out:
                 log.warning("[%s] セレクタ %s で0件。サイト構造が変わった可能性があります", self.name, sel)
             return out
-        for text, url, blk in find_campaign_links(html, base):
+        for text, url, blk in find_campaign_links(html, base, link_pattern=self.source.get("link_pattern")):
             out.append(self.build(text, url, blk))
         return out

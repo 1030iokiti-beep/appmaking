@@ -60,3 +60,43 @@ def test_estimate_uses_prize_not_company():
                           REF, title="冬のあったかキャンペーン")
     assert info["prize"].startswith("オリジナル電気ケトル")
     assert info["prize_value_yen"] == 3000 and info["prize_value_estimated"]
+
+
+def test_deadline_not_confused_with_posted_date():
+    # Koubo 形式: 締切の次の行が掲載日
+    assert ex.extract_period("12/24 締切\n2026/11/25\n掲載", REF)[1] == date(2026, 12, 24)
+    assert ex.extract_period("締切日\n2026/12/24", REF)[1] == date(2026, 12, 24)
+
+
+KOUBO = """2026/11/25 掲載
+締切日
+2026年12月24日（木）
+主催者
+マリンフード
+賞
+北海道 The プレミアムケーキ 1箱
+プレゼント内容
+北海道 The プレミアムケーキ 1箱
+当選者数：300名
+応募方法/応募先
+「応募する」ボタンより応募フォームにアクセスし、必要事項を入力してご応募ください。
+応募時の会員登録
+不要
+出典：
+https://www.marinfood.co.jp/campaign/monthly/
+"""
+
+
+def test_koubo_label_layout():
+    info = ex.extract_all(KOUBO, REF, title="マリンフードのキャンペーン")
+    assert info["deadline"] == date(2026, 12, 24)
+    assert info["company"] == "マリンフード"
+    assert info["prize"].startswith("北海道 The プレミアムケーキ")
+    assert info["winners"] == 300
+    assert info["source_url"] == "https://www.marinfood.co.jp/campaign/monthly/"
+    assert "membership" not in info["conditions"] and "web_form" in info["conditions"]
+
+
+def test_deadline_nearest_keyword_on_one_line():
+    line = "金券 12/1 締切 楽天トラベル 楽パック20周年記念キャンペーン 2026/11/25 NEW"
+    assert ex.extract_period(line, REF)[1] == date(2026, 12, 1)

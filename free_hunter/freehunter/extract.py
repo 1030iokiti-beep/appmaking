@@ -72,18 +72,30 @@ def _mkdate(y: Optional[str], m: str, d: str, ref: date) -> Optional[date]:
     return dt
 
 
-def _dates_in(s: str, ref: date) -> list[date]:
+def _dates_in(s: str, ref: date) -> list[tuple[date, int, int]]:
+    """(日付, 開始位置, 終了位置) のリスト。"""
     out = []
     last_year: Optional[str] = None
     for m in _DATE_RE.finditer(s):
-        # "2026/12" のような年月のみ、"10.5" のような小数を避ける最低限のチェック
         y = m.group("y") or last_year
         if m.group("y"):
             last_year = m.group("y")
         dt = _mkdate(y, m.group("m"), m.group("d"), ref)
         if dt:
-            out.append(dt)
+            out.append((dt, m.start(), m.end()))
     return out
+
+
+_END_KW = re.compile(r"締切|締め切り|〆切|期限|まで|迄|必着|消印有効")
+
+
+def _nearest(ds: list[tuple[date, int, int]], seg: str) -> Optional[date]:
+    """締切キーワードに最も近い日付（同じ行に掲載日などが混ざっていても誤らない）。"""
+    kws = [m.start() for m in _END_KW.finditer(seg)]
+    if not kws:
+        return ds[-1][0]
+    best = min(ds, key=lambda d: min(min(abs(k - d[2]), abs(k - d[1])) for k in kws))
+    return best[0]
 
 
 def extract_period(text: str, ref: Optional[date] = None) -> tuple[Optional[date], Optional[date]]:
@@ -96,24 +108,27 @@ def extract_period(text: str, ref: Optional[date] = None) -> tuple[Optional[date
     for i, line in enumerate(lines):
         if not _DEADLINE_KW.search(line) and not _UNTIL_KW.search(line):
             continue
-        # キーワード行 + 次の行まで見る（「応募期間」の次行に日付があるケース）
-        seg = line + " " + (lines[i + 1] if i + 1 < len(lines) else "")
+        # 基本はキーワード行のみ。行内に日付が無い場合だけ次の行を見る（「応募期間」の次行に日付があるケース）
+        seg = line
         ds = _dates_in(seg, ref)
+        if not ds and i + 1 < len(lines):
+            seg = line + " " + lines[i + 1]
+            ds = _dates_in(seg, ref)
         if not ds:
             continue
-        if "~" in seg and len(ds) >= 2:
-            s, e = ds[0], ds[1]
-            if s <= e:
-                start = start or s
-                deadline = deadline or e
+        # 「A ~ B」の期間表記
+        rng = re.search(r"(\S*?\d[^~]{0,25}?)\s*~\s*([^~]{0,30})", seg)
+        if rng and len(ds) >= 2:
+            pair = [d for d in ds if rng.start() <= d[1] < rng.end()]
+            if len(pair) >= 2 and pair[0][0] <= pair[1][0]:
+                start = start or pair[0][0]
+                deadline = deadline or pair[1][0]
                 break
-        if _DEADLINE_KW.search(line) and re.search(r"締切|締め切り|〆切|期限", line):
-            deadline = deadline or ds[-1]
+        if _END_KW.search(seg):
+            deadline = deadline or _nearest(ds, seg)
             break
-        if _UNTIL_KW.search(seg):
-            deadline = deadline or ds[-1]
-            if "~" in seg and len(ds) >= 2:
-                start = start or ds[0]
+        if _DEADLINE_KW.search(seg) and len(ds) == 1:
+            deadline = deadline or ds[0][0]
             break
     return start, deadline
 
@@ -156,13 +171,15 @@ _VALUE_CTX = re.compile(r"(相当|分|ギフト|カード|券|ポイント|賞|�
 
 # 明記が無い場合の推定（あくまで目安）。キー: 正規表現, 値: 円
 ESTIMATE_TABLE: list[tuple[str, int]] = [
-    (r"旅行|宿泊|ペア.*招待|航空券", 100_000),
+    (r"試写会|舞台挨拶|トークイベント|観覧|鑑賞券|入場券", 3_000),
+    (r"海外旅行|旅行券|航空券|ツアー", 100_000),
+    (r"宿泊|ホテル|旅館|ペア.*招待", 30_000),
     (r"iPhone|MacBook|PlayStation ?5|PS5", 80_000),
     (r"iPad|Nintendo Switch|ニンテンドースイッチ|ルンバ|ダイソン|Dyson", 50_000),
     (r"AirPods|Apple Watch|家電|ドライヤー|空気清浄機", 20_000),
     (r"牛肉|和牛|ブランド牛|松阪|カニ|かに|蟹", 10_000),
     (r"1年分|１年分", 10_000),
-    (r"ディナー|食事券|ホテル", 10_000),
+    (r"ディナー|食事券", 10_000),
     (r"詰め合わせ|セット|ギフト", 3_000),
     (r"ケトル|タンブラー|マグカップ|オリジナルグッズ|トートバッグ", 3_000),
     (r"試供品|サンプル品|お試しサイズ", 500),
@@ -195,12 +212,34 @@ def extract_value(text: str, hint: Optional[str] = None) -> tuple[Optional[int],
     return None, False
 
 
+# ───────── 「見出し行 → 次の行が値」形式（Koubo 等の詳細ページ） ─────────
+def label_value(text: str, labels: tuple[str, ...]) -> Optional[str]:
+    lines = [ln.strip() for ln in normalize_text(text).splitlines()]
+    for i, ln in enumerate(lines[:-1]):
+        if ln.rstrip(":：") in labels and lines[i + 1]:
+            return lines[i + 1]
+    return None
+
+
+_URL_RE = re.compile(r"https?://[^\s<>\"']+")
+
+
+def extract_source_url(text: str) -> Optional[str]:
+    """「出典」「公式サイト」として書かれた元キャンペーンの URL。"""
+    t = normalize_text(text)
+    m = re.search(r"(?:出典|公式サイト|キャンペーンサイト|応募ページ)\s*[:：]?\s*\n?\s*(https?://[^\s<>\"']+)", t)
+    return m.group(1) if m else None
+
+
 # ───────── 賞品 ─────────
 _PRIZE_RE = re.compile(r"(?:賞品|景品|プレゼント内容|プレゼント賞品|プレゼント|賞)\s*[:：】\]]\s*(.+)")
 _PRIZE_LINE = re.compile(r"(.{2,60}?)\s*(?:を)?\s*(?:抽選で)?\s*[\d,]+\s*名様")
 
 
 def extract_prize(text: str) -> Optional[str]:
+    v = label_value(text, ("賞品", "賞", "景品", "プレゼント内容", "プレゼント賞品"))
+    if v and len(v) >= 2:
+        return v[:120]
     t = normalize_text(text)
     for line in t.splitlines():
         m = _PRIZE_RE.search(line)
@@ -242,6 +281,8 @@ _REGION_RE = re.compile("(" + "|".join(PREFECTURES) + r")(?:内)?(?:に)?(?:在�
 
 def extract_conditions(text: str) -> list[str]:
     t = normalize_text(text)
+    # 「会員登録 不要」「購入 不要」のような否定表記は条件にしない
+    t = re.sub(r"(会員登録|購入|アプリ)[^\n]{0,4}\n?\s*(不要|なし|必要ありません)", "", t)
     return [k for k, pat in CONDITION_PATTERNS.items() if re.search(pat, t, re.IGNORECASE)]
 
 
@@ -279,10 +320,13 @@ def extract_eligibility(text: str) -> dict:
 
 
 _COMPANY_RE = re.compile(r"(?:主催|提供|運営|実施)\s*[:：】]?\s*((?:株式会社|有限会社|合同会社)\s*[^\s、。()（）]{1,30}|[^\s、。()（）]{1,30}\s*(?:株式会社|有限会社|合同会社))")
-_COMPANY_ANY = re.compile(r"((?:株式会社|有限会社|合同会社)\s?[^\s、。()（）「」]{1,25}|[^\s、。()（）「」]{1,25}\s?(?:株式会社|有限会社|合同会社))")
+_COMPANY_ANY = re.compile(r"((?:株式会社|有限会社|合同会社)\s?[^\s、。()（）「」]{1,25}|[^\s、。()（）「」]{1,25}(?:株式会社|有限会社|合同会社))")
 
 
 def extract_company(text: str) -> Optional[str]:
+    v = label_value(text, ("主催者", "主催", "提供", "主催社"))
+    if v and 1 < len(v) <= 40:
+        return v
     t = normalize_text(text)
     m = _COMPANY_RE.search(t) or _COMPANY_ANY.search(t)
     return m.group(1).strip() if m else None
@@ -308,4 +352,5 @@ def extract_all(text: str, ref: Optional[date] = None, title: str = "") -> dict:
         "ended": is_ended(text),
         "company": extract_company(text),
         "eligibility": extract_eligibility(text),
+        "source_url": extract_source_url(text),
     }
