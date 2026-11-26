@@ -6,7 +6,6 @@ from datetime import date, datetime
 from typing import Iterable, Optional
 
 from .collectors import COLLECTORS
-from .collectors.x_api import ApiNotConfigured
 from .config import load_sources
 from .db import Database
 from .dedup import fingerprint, is_same_campaign
@@ -122,13 +121,7 @@ def rescore_all(db: Database, settings=None, today: Optional[date] = None) -> di
 
 
 def build_sources(settings) -> list[dict]:
-    sources = [s for s in load_sources() if s.get("enabled")]
-    if settings.get("api", "x_enabled", False):
-        sources.append({"name": "X API", "kind": "x", "url": "https://api.x.com", "enabled": True})
-    if settings.get("api", "instagram_enabled", False):
-        sources.append({"name": "Instagram API", "kind": "instagram", "url": "https://graph.facebook.com",
-                        "enabled": True})
-    return sources
+    return [s for s in load_sources() if s.get("enabled")]
 
 
 def run_collection(db: Database, settings, sources: Optional[list[dict]] = None,
@@ -149,9 +142,6 @@ def run_collection(db: Database, settings, sources: Optional[list[dict]] = None,
                 items = cls(src, http, settings).collect()
                 fetched = len(items)
                 new, upd = save_campaigns(db, items)
-            except ApiNotConfigured as e:
-                error = f"未設定: {e}"
-                log.warning("[%s] %s", src["name"], e)
             except FetchError as e:
                 error = f"取得失敗: {e}"
                 log.warning("[%s] %s", src["name"], e)

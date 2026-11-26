@@ -34,12 +34,3 @@ age = 30
 exclude_purchase_required = false
 # 有料登録が必要な案件を除外するか
 exclude_paid_membership = true
-
-[api]
-# APIキーはここに書かず、環境変数で設定してください。
-#   X:          FH_X_BEARER_TOKEN
-#   Instagram:  FH_IG_ACCESS_TOKEN, FH_IG_USER_ID
-x_enabled = false
-instagram_enabled = false
-x_queries = ["プレゼントキャンペーン -is:retweet", "懸賞 フォロー リポスト -is:retweet"]
-instagram_hashtags = ["プレゼントキャンペーン", "懸賞"]

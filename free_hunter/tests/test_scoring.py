@@ -33,7 +33,7 @@ def test_exclusions():
     assert evaluate(base(applied=1), S, T).excluded_reason == "応募済み"
     assert "応募資格" in evaluate(base(eligibility={"regions": ["東京都"]}), S, T).excluded_reason
     assert evaluate(base(conditions=["paid_membership"]), S, T).excluded_reason == "有料登録が必要"
-    r = evaluate(base(is_official=False, source_kind="x", company=None, prize=None, deadline=None), S, T)
+    r = evaluate(base(is_official=False, source_kind="web_page", company=None, prize=None, deadline=None), S, T)
     assert r.rank == "除外" and r.excluded_reason == "情報が不確実"
 
 

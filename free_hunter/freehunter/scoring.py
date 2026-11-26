@@ -122,12 +122,6 @@ def score_reliability(c: dict) -> tuple[float, str]:
     elif c.get("source_kind") in ("list_page", "rss"):
         s += 15
         notes.append("懸賞サイト掲載")
-    elif c.get("source_kind") in ("x", "instagram"):
-        if c.get("is_official"):
-            s += 20
-        else:
-            s -= 10
-            notes.append("SNS投稿（公式未確認）")
     if c.get("company"):
         s += 5
     else:

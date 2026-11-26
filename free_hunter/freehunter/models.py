@@ -11,7 +11,7 @@ class Campaign:
     title: str
     url: str
     source_name: str
-    source_kind: str                     # rss / list_page / official / web_page / x / instagram
+    source_kind: str                     # rss / list_page / official / web_page
     company: Optional[str] = None
     prize: Optional[str] = None
     prize_value_yen: Optional[int] = None  # 本文に「○円相当」等の記載がある場合のみ

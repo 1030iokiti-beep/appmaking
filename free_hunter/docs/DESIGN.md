@@ -12,8 +12,7 @@
  │ 懸賞専門サイト (RSS / 一覧ページ)   │
  │ 企業公式キャンペーンサイト / HP     │──┐
  │ その他の公開Webページ              │  │  HTTP (requests)
- │ X (公式API v2・任意)               │  │  ※robots.txt 確認・間隔制御・リトライ
- │ Instagram (Graph API・任意)        │  │
+ │                                    │  │  ※robots.txt 確認・間隔制御・リトライ
  └────────────────────────────────┘  │
                                        ▼
  ┌──────────────────── collectors/ ────────────────────┐
@@ -77,9 +76,7 @@ free_hunter/
 │   │   ├─ rss.py             RSS/Atom 汎用
 │   │   ├─ prize_sites.py     懸賞専門サイト一覧ページ（セレクタ設定）
 │   │   ├─ official.py        企業公式サイト（キャンペーンリンク探索）
-│   │   ├─ web_page.py        単一の公開 Web ページ
-│   │   ├─ x_api.py           X 公式 API v2（トークン設定時のみ）
-│   │   └─ instagram_api.py   Instagram Graph API（トークン設定時のみ）
+│   │   └─ web_page.py        単一の公開 Web ページ
 │   ├─ extract.py / normalize.py / dedup.py / status.py / genres.py
 │   ├─ scoring.py             評価エンジン
 │   ├─ db.py                  SQLite
@@ -119,8 +116,6 @@ free_hunter/
 ## 5. API が必要になる可能性がある機能
 | 機能 | 必要なもの | 費用 |
 |---|---|---|
-| X のキャンペーン投稿検索 | X API v2 Bearer Token。検索は有料プラン(Basic 以上)が必要になる可能性が高い | 有料 |
-| Instagram ハッシュタグ検索 | Instagram Graph API（ビジネス/クリエイターアカウント + Facebook アプリ審査） | 無料だが審査・手間あり |
 | AI 自動分析の完全自動化 | Claude API | 従量課金（本システムでは未使用） |
 
 ## 6. 各情報源の収集方法と制約
@@ -131,10 +126,8 @@ free_hunter/
 | 企業公式キャンペーンサイト | 指定 URL を取得し本文から項目抽出 | JS 描画のサイトは Playwright 取得（任意設定） |
 | 企業公式 HP | トップ/ニュースページから「キャンペーン」「プレゼント」を含むリンクを抽出 | 企業ごとに URL を設定に登録する必要あり |
 | その他の公開 Web | URL 指定で単一ページ解析 | 同上 |
-| X | 公式 API v2 `recent search` のみ | 無料枠では検索不可の可能性大。ログイン後画面のスクレイピングは規約違反のため実装しない |
-| Instagram | Graph API `ig_hashtag_search` のみ | ビジネスアカウント必須・週 30 ハッシュタグ制限。スクレイピングは実装しない |
 
-代替策: X/Instagram のキャンペーンは多くが懸賞専門サイトにも掲載されるため、懸賞サイト経由で拾える（情報源は「懸賞サイト」として記録）。
+X / Instagram は対象外（コード削除済み）。SNS 発のキャンペーンも多くは懸賞専門サイトに掲載されるため、懸賞サイト経由で拾う。
 
 ## 7. 開発工程
 STEP 1〜12 の順で実装。各 STEP の確認内容は README の「実装状況」に記載。
