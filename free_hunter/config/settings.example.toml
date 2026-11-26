@@ -1,0 +1,45 @@
+# FREE HUNTER 動作設定
+# このファイルを settings.toml という名前でコピーして編集してください。
+# （settings.toml が無い場合はこのファイルの値が使われます）
+
+[paths]
+# 相対パスは free_hunter フォルダからの位置
+data_dir = "data"
+log_dir = "logs"
+db_file = "data/freehunter.db"
+
+[http]
+user_agent = "FreeHunterBot/0.1 (personal use; respects robots.txt)"
+timeout_sec = 20
+# 同じサイトへのアクセス間隔（秒）。短くしすぎないでください。
+min_interval_sec = 3.0
+retries = 2
+respect_robots_txt = true
+# 1回の実行で1情報源あたり詳細ページを最大何件たどるか
+max_detail_pages = 30
+
+[scoring]
+# ランクの境界（総合スコア 0〜100）
+rank_s = 75
+rank_a = 60
+rank_b = 45
+# 締切が何日以内なら「締切間近」とするか
+deadline_soon_days = 3
+
+[profile]
+# 応募資格の判定に使う（暗号化プロフィールとは別。住所の都道府県レベルのみ）
+prefecture = "東京都"
+age = 30
+# 購入が必要な案件を除外するか
+exclude_purchase_required = false
+# 有料登録が必要な案件を除外するか
+exclude_paid_membership = true
+
+[api]
+# APIキーはここに書かず、環境変数で設定してください。
+#   X:          FH_X_BEARER_TOKEN
+#   Instagram:  FH_IG_ACCESS_TOKEN, FH_IG_USER_ID
+x_enabled = false
+instagram_enabled = false
+x_queries = ["プレゼントキャンペーン -is:retweet", "懸賞 フォロー リポスト -is:retweet"]
+instagram_hashtags = ["プレゼントキャンペーン", "懸賞"]

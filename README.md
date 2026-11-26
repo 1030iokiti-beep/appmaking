@@ -6,6 +6,7 @@
 | `app/` + `supabase/` | スマホアプリ版（Expo + Supabase） |
 | `web/` | 登録不要の恋愛タイプ診断ページ（広告用LP） |
 | `docs/` | セットアップ・事業／法的手続きのガイド |
+| [`free_hunter/`](free_hunter/README.md) | **FREE HUNTER** — 懸賞情報 収集・分析・応募支援システム（Python / Windows） |
 
 ---
 

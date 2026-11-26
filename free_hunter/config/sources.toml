@@ -1,0 +1,80 @@
+# FREE HUNTER 情報源リスト
+# ─────────────────────────────────────────────
+# [[source]] を1つ追加すると情報源が1つ増えます。
+#
+#  kind の種類:
+#   "rss"        … RSS/Atom フィード
+#   "list_page"  … 懸賞サイトの一覧ページ。selectors が無ければ自動でリンクを判定
+#   "official"   … 企業公式サイト。「キャンペーン」「プレゼント」を含むリンクを探す
+#   "web_page"   … 1ページだけ解析（個別キャンペーンページなど）
+#
+#  共通項目:
+#   name        表示名
+#   url         取得先
+#   enabled     true で収集対象
+#   is_official 企業公式の情報源なら true
+#   company     企業名（公式サイトの場合）
+#   use_browser JS で描画されるページなら true（Playwright を使用・遅い）
+#   follow_detail 一覧から詳細ページをたどって項目を補完するか
+#
+#  list_page の selectors（任意。サイトの HTML に合わせて書く）:
+#   item  = 1件分の要素   title = タイトル要素   link = リンク要素(a)
+#
+# ※ 各サイトの利用規約・robots.txt を必ず確認してください。
+#    robots.txt で禁止されている URL は自動的にスキップされます。
+# ※ 下記の URL は開発環境から接続確認できていません（README「実装状況」参照）。
+#    初回は `python -m freehunter check-sources` で取得可否を確認してください。
+# ─────────────────────────────────────────────
+
+[[source]]
+name = "チャンスイット（懸賞サイト）"
+kind = "list_page"
+url = "https://www.chance.com/"
+enabled = true
+is_official = false
+follow_detail = false
+
+[[source]]
+name = "モニプラ（企業キャンペーン集約）"
+kind = "list_page"
+url = "https://monipla.com/"
+enabled = true
+is_official = false
+follow_detail = true
+
+[[source]]
+name = "サントリー キャンペーン"
+kind = "official"
+url = "https://www.suntory.co.jp/campaign/"
+company = "サントリー"
+enabled = true
+is_official = true
+follow_detail = true
+
+[[source]]
+name = "キリン キャンペーン"
+kind = "official"
+url = "https://www.kirin.co.jp/campaign/"
+company = "キリン"
+enabled = true
+is_official = true
+follow_detail = true
+
+# 例: RSS がある懸賞ブログを追加する場合
+# [[source]]
+# name = "○○懸賞ブログ"
+# kind = "rss"
+# url = "https://example.com/feed"
+# enabled = true
+# is_official = false
+
+# 例: 一覧ページのセレクタを指定する場合
+# [[source]]
+# name = "○○懸賞サイト"
+# kind = "list_page"
+# url = "https://example.com/list"
+# enabled = true
+# [source.selectors]
+# item = "div.campaign-item"
+# title = "h3"
+# link = "a"

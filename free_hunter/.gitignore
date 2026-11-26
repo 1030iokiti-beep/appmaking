@@ -1,0 +1,10 @@
+data/*
+!data/.gitkeep
+logs/*
+!logs/.gitkeep
+config/settings.toml
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

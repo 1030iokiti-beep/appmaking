@@ -1,0 +1,9 @@
+# FREE HUNTER 必要ライブラリ（すべて無料・OSS）
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.0
+pandas>=2.1
+streamlit>=1.30
+playwright>=1.40
+cryptography>=42.0
+pytest>=8.0
